@@ -1,0 +1,5 @@
+{
+  "name": "Painel PPGEE - Elétrica e Computação",
+  "description": "Uma interface para visualização de dados dos egressos de mestrado e doutorado, com gráficos dinâmicos, tabelas, filtros e funcionalidades de gerenciamento de dados.",
+  "requestFramePermissions": []
+}
