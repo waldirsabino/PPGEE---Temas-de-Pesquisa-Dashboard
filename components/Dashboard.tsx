@@ -776,7 +776,7 @@ Meta: 0,85.
                 <div className="group relative flex items-center">
                     <InformationCircleIcon className="h-5 w-5 text-gray-400 cursor-help" />
                     <div className="absolute bottom-full mb-2 w-80 max-w-xs -translate-x-1/2 left-1/2 invisible group-hover:visible bg-gray-900 text-white text-xs rounded-md py-2 px-3 shadow-lg z-10 text-left normal-case tracking-normal">
-                        <strong>13. DTD:</strong> [Descrição da métrica DTD. Meta: X.XX]
+                        Teste provisorio
                         <div className="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-x-4 border-x-transparent border-t-4 border-t-gray-900"></div>
                     </div>
                 </div>
