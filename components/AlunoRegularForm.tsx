@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { AlunoRegular, Course } from '../types';
 
@@ -23,7 +22,7 @@ const AlunoRegularForm: React.FC<AlunoRegularFormProps> = ({ aluno, onSave, onCl
     situacao: 'Sem Evasão',
     orientador: '',
     coOrientador: '',
-    proficiencia: '',
+    proficiencia: undefined,
     qualificacao: '',
     defesa: '',
     bolsista: 'Não',
@@ -45,6 +44,10 @@ const AlunoRegularForm: React.FC<AlunoRegularFormProps> = ({ aluno, onSave, onCl
 
     if (dateFields.includes(name)) {
         setFormData(prev => ({ ...prev, [name]: formatDateInput(value) }));
+    } else if (name === 'proficiencia') {
+        // Allow empty string to clear the number, otherwise parse it.
+        const numericValue = value === '' ? undefined : parseFloat(value);
+        setFormData(prev => ({ ...prev, [name]: isNaN(numericValue!) ? undefined : numericValue }));
     } else {
         setFormData(prev => ({ ...prev, [name]: value }));
     }
@@ -55,6 +58,7 @@ const AlunoRegularForm: React.FC<AlunoRegularFormProps> = ({ aluno, onSave, onCl
     onSave({
       id: aluno?.id || new Date().toISOString(),
       ...formData,
+      proficiencia: formData.proficiencia != null ? Number(formData.proficiencia) : undefined,
     });
   };
 
@@ -126,8 +130,8 @@ const AlunoRegularForm: React.FC<AlunoRegularFormProps> = ({ aluno, onSave, onCl
             <legend className="px-2 text-sm font-medium text-gray-800 dark:text-gray-200">Marcos Acadêmicos</legend>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
               <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Proficiência</label>
-                  <input type="text" name="proficiencia" value={formData.proficiencia} onChange={handleChange} className="mt-1 block w-full rounded-md border-2 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600" />
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Proficiência Nota</label>
+                  <input type="number" step="0.01" name="proficiencia" value={formData.proficiencia ?? ''} onChange={handleChange} className="mt-1 block w-full rounded-md border-2 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600" />
               </div>
               <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Qualificação (dd/mm/aaaa)</label>

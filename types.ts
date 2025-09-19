@@ -86,7 +86,7 @@ export interface AlunoRegular {
   situacao: string;
   orientador: string;
   coOrientador?: string;
-  proficiencia?: string;
+  proficiencia?: number;
   qualificacao?: string; // 'dd/mm/aaaa'
   defesa?: string; // 'dd/mm/aaaa'
   bolsista?: string;

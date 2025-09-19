@@ -3,7 +3,6 @@ import { AlunoRegular, Course } from '../types';
 import AlunoRegularForm from './AlunoRegularForm';
 import { generateAlunoRegularPDF } from './AlunoRegularReport';
 import EnvelopeIcon from './icons/EnvelopeIcon';
-import ExclamationTriangleIcon from './icons/ExclamationTriangleIcon';
 
 
 declare const XLSX: any;
@@ -79,6 +78,7 @@ const AlunoRegularTable: React.FC<AlunoRegularTableProps> = ({ data, onUpdate, o
   const [emailSubject, setEmailSubject] = useState('');
   const [copySuccess, setCopySuccess] = useState('');
   const [copyToSuccess, setCopyToSuccess] = useState('');
+  const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
 
 
   const sortedData = useMemo(() => {
@@ -133,8 +133,10 @@ const AlunoRegularTable: React.FC<AlunoRegularTableProps> = ({ data, onUpdate, o
   const exportToExcel = useCallback(() => {
     const exportData = data.map(aluno => {
         const durationMonths = calculateDurationInMonths(aluno);
+        const { proficiencia, ...rest } = aluno;
         return {
-        ...aluno,
+        ...rest,
+        'PROFICIÊNCIA NOTA': proficiencia, // Now exports the number type directly
         'DURAÇÃO': durationMonths !== null ? `${durationMonths.toFixed(1)} meses` : '-'
     }});
     const worksheet = XLSX.utils.json_to_sheet(exportData);
@@ -146,8 +148,10 @@ const AlunoRegularTable: React.FC<AlunoRegularTableProps> = ({ data, onUpdate, o
   const exportToCSV = useCallback(() => {
     const exportData = data.map(aluno => {
         const durationMonths = calculateDurationInMonths(aluno);
+        const { proficiencia, ...rest } = aluno;
         return {
-        ...aluno,
+        ...rest,
+        'PROFICIÊNCIA NOTA': proficiencia != null ? proficiencia.toFixed(2) : '', // Format for CSV
         'DURAÇÃO': durationMonths !== null ? `${durationMonths.toFixed(1)} meses` : '-'
     }});
     const csv = Papa.unparse(exportData);
@@ -195,7 +199,7 @@ const AlunoRegularTable: React.FC<AlunoRegularTableProps> = ({ data, onUpdate, o
           <th>Ingresso</th>
           <th>Duração</th>
           <th>Bolsista</th>
-          <th>Proficiência</th>
+          <th>Proficiência Nota</th>
           <th>Qualificação</th>
         </tr>
       </thead>
@@ -212,7 +216,7 @@ const AlunoRegularTable: React.FC<AlunoRegularTableProps> = ({ data, onUpdate, o
         <td>${aluno.ingresso || 'N/A'}</td>
         <td>${durationText}</td>
         <td>${aluno.bolsista || 'Não'}</td>
-        <td>${aluno.proficiencia || 'Pendente'}</td>
+        <td>${aluno.proficiencia != null ? aluno.proficiencia.toFixed(2) : 'Pendente'}</td>
         <td>${aluno.qualificacao || 'Pendente'}</td>
       </tr>
     `}).join('');
@@ -289,7 +293,7 @@ const AlunoRegularTable: React.FC<AlunoRegularTableProps> = ({ data, onUpdate, o
     { key: 'orientador', label: 'Orientador(a)' },
     { key: 'coOrientador', label: 'Co Orientador(a)' },
     { key: null, label: 'Duração' }, // Not sortable
-    { key: 'proficiencia', label: 'Proficiência' },
+    { key: 'proficiencia', label: 'Proficiência Nota' },
     { key: 'qualificacao', label: 'Qualificação' },
     { key: 'defesa', label: 'Defesa' },
     { key: 'bolsista', label: 'Bolsista' },
@@ -313,7 +317,7 @@ const AlunoRegularTable: React.FC<AlunoRegularTableProps> = ({ data, onUpdate, o
                     <EnvelopeIcon className="h-4 w-4" />
                     <span>Preparar E-mail</span>
                 </button>
-                <button onClick={() => generateAlunoRegularPDF(data, filters)} className="px-3 py-1 bg-red-600 text-white rounded-md hover:bg-red-700 text-sm">Gerar Relatório PDF</button>
+                <button onClick={() => setIsPdfModalOpen(true)} className="px-3 py-1 bg-red-600 text-white rounded-md hover:bg-red-700 text-sm">Gerar Relatório PDF</button>
                 <button onClick={exportToCSV} className="px-3 py-1 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm">Exportar CSV</button>
                 <button onClick={exportToExcel} className="px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm">Exportar Excel</button>
             </div>
@@ -343,14 +347,26 @@ const AlunoRegularTable: React.FC<AlunoRegularTableProps> = ({ data, onUpdate, o
               const durationText = durationMonths !== null ? `${durationMonths.toFixed(1)} meses` : '-';
               
               let durationBadgeClass = '';
-              if (durationMonths !== null) {
-                  if (a.curso === Course.MESTRADO) {
-                      if (durationMonths > 22.0) {
-                          durationBadgeClass = 'bg-red-100 text-red-800 dark:bg-red-800/50 dark:text-red-200';
-                      } else if (durationMonths > 17.0 && a.qualificacao) {
-                          durationBadgeClass = 'bg-green-100 text-green-800 dark:bg-green-800/50 dark:text-green-200';
-                      }
-                  } else if (a.curso === Course.DOUTORADO) {
+              const isMestrado = a.curso === Course.MESTRADO;
+              const isDoutorado = a.curso === Course.DOUTORADO;
+              const isDesligado = a.situacao === 'Desligado';
+              const hasValidDuration = durationMonths !== null;
+
+              if (hasValidDuration && !isDesligado) {
+                  const isMestradoQualPendente = isMestrado && durationMonths > 17.0 && !a.qualificacao;
+                  const isMestradoDefesaPendente = isMestrado && durationMonths > 22.0;
+
+                  const isDoutoradoDefesaPendente = isDoutorado && durationMonths > 46.0;
+                  const isDoutoradoQualPendente = isDoutorado && durationMonths > 22.0 && !a.qualificacao;
+                  const isDoutoradoQualificadoOk = isDoutorado && durationMonths > 22.0 && !!a.qualificacao;
+
+
+                  if (isMestradoQualPendente || isMestradoDefesaPendente || isDoutoradoDefesaPendente || isDoutoradoQualPendente) {
+                      durationBadgeClass = 'bg-red-100 text-red-800 dark:bg-red-800/50 dark:text-red-200';
+                  } else if (isDoutoradoQualificadoOk) {
+                       durationBadgeClass = 'bg-green-100 text-green-800 dark:bg-green-800/50 dark:text-green-200';
+                  }
+                  else if (isMestrado) {
                       durationBadgeClass = 'bg-green-100 text-green-800 dark:bg-green-800/50 dark:text-green-200';
                   }
               }
@@ -367,10 +383,8 @@ const AlunoRegularTable: React.FC<AlunoRegularTableProps> = ({ data, onUpdate, o
                   </td>
                   <td className="px-3 py-4 whitespace-normal text-xs text-gray-500 dark:text-gray-300">
                      <div className="flex items-center gap-1">
-                        {a.curso === Course.MESTRADO && durationMonths !== null && durationMonths > 6.0 && !a.orientador ? (
-                          <span title="Orientador pendente após 6 meses">
-                            <ExclamationTriangleIcon className="h-4 w-4 text-yellow-500" />
-                          </span>
+                        {!isDesligado && hasValidDuration && durationMonths > 6.0 && (!a.orientador || a.orientador === 'N/A') ? (
+                          <span title="Orientador pendente após 6 meses" className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-800/50 dark:text-yellow-200">A!</span>
                         ) : null}
                         <span>{a.orientador || '-'}</span>
                       </div>
@@ -387,22 +401,19 @@ const AlunoRegularTable: React.FC<AlunoRegularTableProps> = ({ data, onUpdate, o
                   </td>
                   <td className="px-3 py-4 whitespace-nowrap text-xs text-gray-500 dark:text-gray-300">
                      <div className="flex items-center gap-1">
-                      {a.curso === Course.MESTRADO && !a.proficiencia ? (
-                        // FIX: Wrapped ExclamationTriangleIcon in a span to provide a tooltip, as the 'title' prop is not valid on the component.
-                        <span title="Proficiência pendente">
-                          <ExclamationTriangleIcon className="h-4 w-4 text-yellow-500" />
-                        </span>
+                      {!isDesligado && a.proficiencia == null ? (
+                        <span title="Proficiência Nota pendente" className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-800/50 dark:text-yellow-200">A!</span>
                       ) : null}
-                      <span>{a.proficiencia || '-'}</span>
+                      <span>{a.proficiencia != null ? a.proficiencia.toFixed(2) : '-'}</span>
                     </div>
                   </td>
                   <td className="px-3 py-4 whitespace-nowrap text-xs text-gray-500 dark:text-gray-300">
                     <div className="flex items-center gap-1">
-                      {a.curso === Course.MESTRADO && durationMonths !== null && durationMonths > 17.0 && !a.qualificacao ? (
-                        // FIX: Wrapped ExclamationTriangleIcon in a span to provide a tooltip, as the 'title' prop is not valid on the component.
-                        <span title="Qualificação pendente e prazo se esgotando">
-                          <ExclamationTriangleIcon className="h-4 w-4 text-yellow-500" />
-                        </span>
+                      {isMestrado && !isDesligado && hasValidDuration && durationMonths > 17.0 && !a.qualificacao ? (
+                        <span title="Qualificação de mestrado pendente e prazo se esgotando" className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-800/50 dark:text-yellow-200">A!</span>
+                      ) : null}
+                       {isDoutorado && !isDesligado && hasValidDuration && durationMonths > 22.0 && !a.qualificacao ? (
+                        <span title="Qualificação de doutorado pendente e prazo se esgotando" className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-800/50 dark:text-yellow-200">A!</span>
                       ) : null}
                       <span>{a.qualificacao || '-'}</span>
                     </div>
@@ -437,6 +448,39 @@ const AlunoRegularTable: React.FC<AlunoRegularTableProps> = ({ data, onUpdate, o
             onSave={handleUpdate}
             onClose={() => setEditingAluno(null)}
         />
+    )}
+    {isPdfModalOpen && (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-md">
+          <h2 className="text-xl font-bold text-gray-800 dark:text-gray-200 mb-4">Escolha o formato do Relatório PDF</h2>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">Selecione como os dados dos alunos regulares devem ser organizados no arquivo PDF.</p>
+          <div className="space-y-4">
+             <button
+              onClick={() => {
+                generateAlunoRegularPDF(data, filters, 'by_orientador');
+                setIsPdfModalOpen(false);
+              }}
+              className="w-full px-4 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75"
+            >
+              Organizado por Orientador
+            </button>
+            <button
+              onClick={() => {
+                generateAlunoRegularPDF(sortedData, filters, 'as_ui');
+                setIsPdfModalOpen(false);
+              }}
+              className="w-full px-4 py-3 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-opacity-75"
+            >
+              Como na Tabela (Ordenação Atual)
+            </button>
+          </div>
+          <div className="mt-6 text-right">
+             <button onClick={() => setIsPdfModalOpen(false)} className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500">
+              Cancelar
+            </button>
+          </div>
+        </div>
+      </div>
     )}
     {isEmailModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">

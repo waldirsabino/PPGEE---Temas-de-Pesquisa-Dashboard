@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useRef, useMemo } from 'react';
 import { Graduate, Course, Status, Docente, Projeto, Turma, AlunoRegular, Periodico, Conferencia, AlunoEspecial } from '../types';
 import DataForm from './DataForm';
@@ -536,23 +535,26 @@ const DataManagement: React.FC<DataManagementProps> = ({
                 if (!Array.isArray(jsonData)) {
                     throw new Error("O arquivo JSON deve conter um array de alunos regulares.");
                 }
-                 const sanitizedAlunos: AlunoRegular[] = (jsonData as any[]).map((item, index): AlunoRegular => ({
-                    id: item.id ?? `imported-json-${Date.now()}-${index}`,
-                    matricula: String(item.matricula ?? ''),
-                    aluno: String(item.aluno ?? 'N/A'),
-                    ingresso: String(item.ingresso ?? 'N/A'),
-                    situacao: String(item.situacao ?? 'Sem Evasão'),
-                    orientador: String(item.orientador ?? 'N/A'),
-                    coOrientador: item.coOrientador ? String(item.coOrientador) : undefined,
-                    proficiencia: item.proficiencia ? String(item.proficiencia) : undefined,
-                    qualificacao: item.qualificacao ? String(item.qualificacao) : undefined,
-                    defesa: item.defesa ? String(item.defesa) : undefined,
-                    bolsista: item.bolsista ? String(item.bolsista) : undefined,
-                    curso: item.curso === Course.DOUTORADO ? Course.DOUTORADO : Course.MESTRADO,
-                    email: item.email ? String(item.email) : undefined,
-                    fone: item.fone ? String(item.fone) : undefined,
-                    informacoesExtras: item.informacoesExtras ? String(item.informacoesExtras) : undefined,
-                }));
+                 const sanitizedAlunos: AlunoRegular[] = (jsonData as any[]).map((item, index): AlunoRegular => {
+                    const proficienciaNum = item.proficiencia != null ? Number(item.proficiencia) : NaN;
+                    return {
+                        id: item.id ?? `imported-json-${Date.now()}-${index}`,
+                        matricula: String(item.matricula ?? ''),
+                        aluno: String(item.aluno ?? 'N/A'),
+                        ingresso: String(item.ingresso ?? 'N/A'),
+                        situacao: String(item.situacao ?? 'Sem Evasão'),
+                        orientador: String(item.orientador ?? 'N/A'),
+                        coOrientador: item.coOrientador ? String(item.coOrientador) : undefined,
+                        proficiencia: !isNaN(proficienciaNum) ? proficienciaNum : undefined,
+                        qualificacao: item.qualificacao ? String(item.qualificacao) : undefined,
+                        defesa: item.defesa ? String(item.defesa) : undefined,
+                        bolsista: item.bolsista ? String(item.bolsista) : undefined,
+                        curso: item.curso === Course.DOUTORADO ? Course.DOUTORADO : Course.MESTRADO,
+                        email: item.email ? String(item.email) : undefined,
+                        fone: item.fone ? String(item.fone) : undefined,
+                        informacoesExtras: item.informacoesExtras ? String(item.informacoesExtras) : undefined,
+                    };
+                });
                 onImportAlunosRegulares(sanitizedAlunos);
                 alert(`${sanitizedAlunos.length} registros de alunos regulares importados com sucesso do arquivo JSON!`);
             } catch (err) {
@@ -593,6 +595,9 @@ const DataManagement: React.FC<DataManagementProps> = ({
                             // Any other value (like 'sem evasão') will default to 'Sem Evasão'
                         }
 
+                        const proficienciaRaw = row['PROFICIÊNCIA NOTA'] || row['PROFICIÊNCIA'];
+                        const proficienciaValue = proficienciaRaw != null ? parseFloat(String(proficienciaRaw).replace(',', '.')) : NaN;
+
                         const bolsistaValue = row['BOLSISTA'] ?? row['Bolsista'] ?? row['bolsista'];
 
                         acc.push({
@@ -603,7 +608,7 @@ const DataManagement: React.FC<DataManagementProps> = ({
                             situacao: situacaoValue,
                             orientador: row['ORIENTADOR(A)'] || 'N/A',
                             coOrientador: row['CO ORIENTADOR(A)'] || undefined,
-                            proficiencia: row['PROFICIÊNCIA'] || undefined,
+                            proficiencia: !isNaN(proficienciaValue) ? proficienciaValue : undefined,
                             qualificacao: formatDate(row['QUALIFICAÇÃO']) || undefined,
                             defesa: formatDate(row['DEFESA']) || undefined,
                             bolsista: bolsistaValue ? String(bolsistaValue).trim() : undefined,
