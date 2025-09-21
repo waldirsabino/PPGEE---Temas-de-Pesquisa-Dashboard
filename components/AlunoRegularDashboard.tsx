@@ -85,13 +85,21 @@ const AlunoRegularDashboard: React.FC<AlunoRegularDashboardProps> = ({ alunos, o
     };
   });
   
+  const [searchName, setSearchName] = useState('');
+  
   const handleFilterChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFilters(prev => ({ ...prev, [name]: value }));
   }, []);
 
   const filteredAlunos = useMemo(() => {
+    const lowercasedSearch = searchName.trim().toLowerCase();
+    
     return alunos.filter(a => {
+      if (lowercasedSearch && !a.aluno.toLowerCase().includes(lowercasedSearch)) {
+        return false;
+      }
+      
       const startYear = parseInt(filters.startYear, 10);
       const endYear = parseInt(filters.endYear, 10);
       const ingressoYear = getYear(a.ingresso);
@@ -126,7 +134,7 @@ const AlunoRegularDashboard: React.FC<AlunoRegularDashboardProps> = ({ alunos, o
       
       return true;
     });
-  }, [alunos, filters]);
+  }, [alunos, filters, searchName]);
   
   const totalMestrado = useMemo(() => {
     return filteredAlunos.filter(a => a.curso === Course.MESTRADO).length;
@@ -141,6 +149,19 @@ const AlunoRegularDashboard: React.FC<AlunoRegularDashboardProps> = ({ alunos, o
     <div className="p-6 space-y-6">
       {/* Filter Panel */}
       <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
+        <div className="mb-4">
+          <label htmlFor="searchName" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Buscar por Nome</label>
+          <input 
+              type="text" 
+              name="searchName" 
+              id="searchName" 
+              value={searchName} 
+              onChange={(e) => setSearchName(e.target.value)} 
+              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" 
+              placeholder="Digite o nome do aluno..." 
+              aria-label="Buscar aluno por nome"
+          />
+        </div>
         <div className="flex flex-wrap items-end gap-4">
           <div className="flex-1 min-w-[120px]">
             <label htmlFor="startYear" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Ano Início</label>
