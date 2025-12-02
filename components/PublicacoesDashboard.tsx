@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useCallback } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LabelList } from 'recharts';
 import { Periodico, Conferencia } from '../types';
@@ -12,9 +11,10 @@ interface PublicacoesDashboardProps {
   onDeletePeriodico: (id: string) => void;
   onUpdateConferencia: (conferencia: Conferencia) => void;
   onDeleteConferencia: (id: string) => void;
+  userRole: 'Administrador' | 'Visualizador';
 }
 
-const PublicacoesDashboard: React.FC<PublicacoesDashboardProps> = ({ periodicos, conferencias, onUpdatePeriodico, onDeletePeriodico, onUpdateConferencia, onDeleteConferencia }) => {
+const PublicacoesDashboard: React.FC<PublicacoesDashboardProps> = ({ periodicos, conferencias, onUpdatePeriodico, onDeletePeriodico, onUpdateConferencia, onDeleteConferencia, userRole }) => {
   const [activeTab, setActiveTab] = useState<'periodicos' | 'conferencias'>('periodicos');
 
   const [filters, setFilters] = useState(() => {
@@ -147,7 +147,7 @@ const PublicacoesDashboard: React.FC<PublicacoesDashboardProps> = ({ periodicos,
                 </ResponsiveContainer>
               </div>
 
-              <PeriodicoTable data={filteredPeriodicos} onUpdate={onUpdatePeriodico} onDelete={onDeletePeriodico} />
+              <PeriodicoTable data={filteredPeriodicos} onUpdate={onUpdatePeriodico} onDelete={onDeletePeriodico} userRole={userRole} />
             </div>
           )}
 
@@ -175,7 +175,7 @@ const PublicacoesDashboard: React.FC<PublicacoesDashboardProps> = ({ periodicos,
                   </ResponsiveContainer>
                 </div>
 
-                <ConferenciaTable data={filteredConferencias} onUpdate={onUpdateConferencia} onDelete={onDeleteConferencia} />
+                <ConferenciaTable data={filteredConferencias} onUpdate={onUpdateConferencia} onDelete={onDeleteConferencia} userRole={userRole} />
             </div>
           )}
         </div>

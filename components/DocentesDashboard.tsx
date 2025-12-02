@@ -6,9 +6,10 @@ interface DocentesDashboardProps {
   docentes: Docente[];
   onUpdate: (docente: Docente) => void;
   onDelete: (id: string) => void;
+  userRole: 'Administrador' | 'Visualizador';
 }
 
-const DocentesDashboard: React.FC<DocentesDashboardProps> = ({ docentes, onUpdate, onDelete }) => {
+const DocentesDashboard: React.FC<DocentesDashboardProps> = ({ docentes, onUpdate, onDelete, userRole }) => {
   const [filters, setFilters] = useState(() => {
     const years = docentes.map(d => d.ano);
     const minYear = years.length > 0 ? Math.min(...years) : new Date().getFullYear() - 5;

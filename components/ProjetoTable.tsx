@@ -9,11 +9,12 @@ interface ProjetoTableProps {
   data: Projeto[];
   onUpdate: (projeto: Projeto) => void;
   onDelete: (id: string) => void;
+  userRole: 'Administrador' | 'Visualizador';
 }
 
 type SortKey = keyof Projeto;
 
-const ProjetoTable: React.FC<ProjetoTableProps> = ({ data, onUpdate, onDelete }) => {
+const ProjetoTable: React.FC<ProjetoTableProps> = ({ data, onUpdate, onDelete, userRole }) => {
   const [sortKey, setSortKey] = useState<SortKey>('titulo');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [currentPage, setCurrentPage] = useState(1);
@@ -110,9 +111,11 @@ const ProjetoTable: React.FC<ProjetoTableProps> = ({ data, onUpdate, onDelete })
                   {header.label} {sortKey === header.key && (sortOrder === 'asc' ? '▲' : '▼')}
                 </th>
               ))}
+               {userRole === 'Administrador' && (
                <th scope="col" className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                 Ações
               </th>
+               )}
             </tr>
           </thead>
           <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -129,10 +132,12 @@ const ProjetoTable: React.FC<ProjetoTableProps> = ({ data, onUpdate, onDelete })
                 <td className="px-4 py-4 whitespace-nowrap text-sm text-center text-gray-500 dark:text-gray-300">{p.alunosDoutoradoEnvolvidos}</td>
                 <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{p.anoInicio}</td>
                 <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{p.anoFim || '-'}</td>
-                <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  <button onClick={() => setEditingProjeto(p)} className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-200 mr-3">Editar</button>
-                  <button onClick={() => onDelete(p.id)} className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-200">Excluir</button>
-                </td>
+                {userRole === 'Administrador' && (
+                  <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <button onClick={() => setEditingProjeto(p)} className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-200 mr-3">Editar</button>
+                    <button onClick={() => onDelete(p.id)} className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-200">Excluir</button>
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>

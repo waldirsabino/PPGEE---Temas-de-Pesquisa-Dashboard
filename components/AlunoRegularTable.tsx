@@ -13,6 +13,7 @@ interface AlunoRegularTableProps {
   onUpdate: (aluno: AlunoRegular) => void;
   onDelete: (id: string) => void;
   filters: any;
+  userRole: 'Administrador' | 'Visualizador';
 }
 
 const parseDate = (dateString?: string): Date | null => {
@@ -65,7 +66,7 @@ const getStatusBadgeClass = (status: string): string => {
 };
 
 
-const AlunoRegularTable: React.FC<AlunoRegularTableProps> = ({ data, onUpdate, onDelete, filters }) => {
+const AlunoRegularTable: React.FC<AlunoRegularTableProps> = ({ data, onUpdate, onDelete, filters, userRole }) => {
   const [sortKey, setSortKey] = useState<keyof AlunoRegular>('ingresso');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [currentPage, setCurrentPage] = useState(1);
@@ -310,13 +311,15 @@ const AlunoRegularTable: React.FC<AlunoRegularTableProps> = ({ data, onUpdate, o
         <div className="flex justify-between items-center mb-4">
             <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-200">Lista de Alunos Regulares</h3>
             <div className="flex flex-wrap gap-2">
-                <button 
-                    onClick={handlePrepareEmail} 
-                    className="inline-flex items-center gap-2 px-3 py-1 bg-teal-600 text-white rounded-md hover:bg-teal-700 text-sm"
-                >
-                    <EnvelopeIcon className="h-4 w-4" />
-                    <span>Preparar E-mail</span>
-                </button>
+                {userRole === 'Administrador' && (
+                  <button 
+                      onClick={handlePrepareEmail} 
+                      className="inline-flex items-center gap-2 px-3 py-1 bg-teal-600 text-white rounded-md hover:bg-teal-700 text-sm"
+                  >
+                      <EnvelopeIcon className="h-4 w-4" />
+                      <span>Preparar E-mail</span>
+                  </button>
+                )}
                 <button onClick={() => setIsPdfModalOpen(true)} className="px-3 py-1 bg-red-600 text-white rounded-md hover:bg-red-700 text-sm">Gerar Relatório PDF</button>
                 <button onClick={exportToCSV} className="px-3 py-1 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm">Exportar CSV</button>
                 <button onClick={exportToExcel} className="px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm">Exportar Excel</button>
@@ -336,9 +339,11 @@ const AlunoRegularTable: React.FC<AlunoRegularTableProps> = ({ data, onUpdate, o
                   {header.label} {header.key && sortKey === header.key && (sortOrder === 'asc' ? '▲' : '▼')}
                 </th>
               ))}
-              <th scope="col" className="px-3 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                Ações
-              </th>
+              {userRole === 'Administrador' && (
+                <th scope="col" className="px-3 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                  Ações
+                </th>
+              )}
             </tr>
           </thead>
           <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -421,10 +426,12 @@ const AlunoRegularTable: React.FC<AlunoRegularTableProps> = ({ data, onUpdate, o
                   <td className="px-3 py-4 whitespace-nowrap text-xs text-gray-500 dark:text-gray-300">{a.defesa || '-'}</td>
                   <td className="px-3 py-4 whitespace-nowrap text-xs text-gray-500 dark:text-gray-300">{a.bolsista || '-'}</td>
                   <td className="px-3 py-4 whitespace-nowrap text-xs text-gray-500 dark:text-gray-300">{a.curso}</td>
-                  <td className="px-3 py-4 whitespace-nowrap text-right text-xs font-medium">
-                    <button onClick={() => setEditingAluno(a)} className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-200 mr-3">Editar</button>
-                    <button onClick={() => onDelete(a.id)} className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-200">Excluir</button>
-                  </td>
+                  {userRole === 'Administrador' && (
+                    <td className="px-3 py-4 whitespace-nowrap text-right text-xs font-medium">
+                      <button onClick={() => setEditingAluno(a)} className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-200 mr-3">Editar</button>
+                      <button onClick={() => onDelete(a.id)} className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-200">Excluir</button>
+                    </td>
+                  )}
                 </tr>
               )
             })}

@@ -9,6 +9,8 @@ import NewspaperIcon from './icons/NewspaperIcon';
 import AcademicCapIcon from './icons/AcademicCapIcon';
 import UserIcon from './icons/UserIcon';
 import UserPlusIcon from './icons/UserPlusIcon';
+import { User } from '../types';
+import { MOCK_USERS } from '../constants';
 
 type View = 'dashboard' | 'turmas' | 'alunoRegular' | 'alunoEspecial' | 'docentes' | 'publicacoes' | 'dataManagement' | 'admin';
 
@@ -17,19 +19,24 @@ interface SidebarProps {
   setActiveView: (view: View) => void;
   isCollapsed: boolean;
   onToggle: () => void;
+  userRole: 'Administrador' | 'Visualizador';
+  onUserChange: (userId: string) => void;
+  currentUser: User;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView, isCollapsed, onToggle }) => {
-  const navItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: ChartBarIcon },
-    { id: 'turmas', label: 'Turmas', icon: BookOpenIcon },
-    { id: 'alunoRegular', label: 'Aluno Regular', icon: UserIcon },
-    { id: 'alunoEspecial', label: 'Aluno Especial', icon: UserPlusIcon },
-    { id: 'docentes', label: 'Docentes', icon: AcademicCapIcon },
-    { id: 'publicacoes', label: 'Publicações', icon: NewspaperIcon },
-    { id: 'dataManagement', label: 'Gerenciar Dados', icon: DatabaseIcon },
-    { id: 'admin', label: 'Painel Admin', icon: UsersIcon },
+const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView, isCollapsed, onToggle, userRole, onUserChange, currentUser }) => {
+  const allNavItems = [
+    { id: 'dashboard', label: 'Dashboard', icon: ChartBarIcon, roles: ['Administrador', 'Visualizador'] },
+    { id: 'turmas', label: 'Turmas', icon: BookOpenIcon, roles: ['Administrador', 'Visualizador'] },
+    { id: 'alunoRegular', label: 'Aluno Regular', icon: UserIcon, roles: ['Administrador', 'Visualizador'] },
+    { id: 'alunoEspecial', label: 'Aluno Especial', icon: UserPlusIcon, roles: ['Administrador', 'Visualizador'] },
+    { id: 'docentes', label: 'Docentes', icon: AcademicCapIcon, roles: ['Administrador'] },
+    { id: 'publicacoes', label: 'Publicações', icon: NewspaperIcon, roles: ['Administrador', 'Visualizador'] },
+    { id: 'dataManagement', label: 'Gerenciar Dados', icon: DatabaseIcon, roles: ['Administrador'] },
+    { id: 'admin', label: 'Painel Admin', icon: UsersIcon, roles: ['Administrador'] },
   ];
+
+  const navItems = allNavItems.filter(item => item.roles.includes(userRole));
 
   return (
     <aside className={`bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 flex flex-col shadow-lg transition-all duration-300 ease-in-out ${isCollapsed ? 'w-20' : 'w-64'}`}>
@@ -58,6 +65,21 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView, isCollapse
           ))}
         </ul>
       </nav>
+      
+      {/* Role Switcher for Testing */}
+      <div className={`px-4 py-2 border-t border-gray-200 dark:border-gray-700 transition-all duration-200 ${isCollapsed ? 'hidden' : 'block'}`}>
+          <label className="block text-xs font-medium text-gray-500 mb-1">Simular Usuário:</label>
+          <select 
+            value={currentUser.id} 
+            onChange={(e) => onUserChange(e.target.value)}
+            className="block w-full text-xs rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 py-1 px-2 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+          >
+              {MOCK_USERS.map(u => (
+                  <option key={u.id} value={u.id}>{u.role} ({u.name})</option>
+              ))}
+          </select>
+      </div>
+
       <div className="p-4 border-t border-gray-200 dark:border-gray-700">
          <button 
             onClick={onToggle} 

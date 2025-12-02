@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useCallback } from 'react';
 import { Graduate } from '../types';
 import DataForm from './DataForm';
@@ -10,11 +9,12 @@ interface DataTableProps {
   data: Graduate[];
   onUpdate: (graduate: Graduate) => void;
   onDelete: (id: string) => void;
+  userRole: 'Administrador' | 'Visualizador';
 }
 
 type SortKey = keyof Graduate;
 
-const DataTable: React.FC<DataTableProps> = ({ data, onUpdate, onDelete }) => {
+const DataTable: React.FC<DataTableProps> = ({ data, onUpdate, onDelete, userRole }) => {
   const [sortKey, setSortKey] = useState<SortKey>('nome');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [currentPage, setCurrentPage] = useState(1);
@@ -107,9 +107,11 @@ const DataTable: React.FC<DataTableProps> = ({ data, onUpdate, onDelete }) => {
                   {header.label} {sortKey === header.key && (sortOrder === 'asc' ? '▲' : '▼')}
                 </th>
               ))}
-              <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                Ações
-              </th>
+              {userRole === 'Administrador' && (
+                <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                  Ações
+                </th>
+              )}
             </tr>
           </thead>
           <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -126,10 +128,12 @@ const DataTable: React.FC<DataTableProps> = ({ data, onUpdate, onDelete }) => {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{g.orientador}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{g.trabalhando || '-'}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  <button onClick={() => setEditingGraduate(g)} className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-200 mr-3">Editar</button>
-                  <button onClick={() => onDelete(g.id)} className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-200">Excluir</button>
-                </td>
+                {userRole === 'Administrador' && (
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <button onClick={() => setEditingGraduate(g)} className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-200 mr-3">Editar</button>
+                    <button onClick={() => onDelete(g.id)} className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-200">Excluir</button>
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>

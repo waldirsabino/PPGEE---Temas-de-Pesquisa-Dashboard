@@ -250,11 +250,18 @@ export const generateAlunoRegularPDF = (data: AlunoRegular[], filters: Filters, 
   } else { // 'as_ui'
     drawHeaderAndFilters(doc, filters);
 
-    const tableRows = data.map(aluno => createRowData(aluno));
+    // Sort: Mestrado first, then Doutorado. Maintain relative order (stable sort).
+    const sortedData = [...data].sort((a, b) => {
+        if (a.curso === Course.MESTRADO && b.curso === Course.DOUTORADO) return -1;
+        if (a.curso === Course.DOUTORADO && b.curso === Course.MESTRADO) return 1;
+        return 0;
+    });
+
+    const tableRows = sortedData.map(aluno => createRowData(aluno));
     
     let mestradoCount = 0;
     let doutoradoCount = 0;
-    data.forEach(aluno => {
+    sortedData.forEach(aluno => {
         if (aluno.curso === Course.MESTRADO) mestradoCount++;
         else if (aluno.curso === Course.DOUTORADO) doutoradoCount++;
     });

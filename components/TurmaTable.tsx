@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useCallback } from 'react';
 import { Turma } from '../types';
 import TurmaForm from './TurmaForm';
@@ -10,11 +9,12 @@ interface TurmaTableProps {
   data: Turma[];
   onUpdate: (turma: Turma) => void;
   onDelete: (id: string) => void;
+  userRole: 'Administrador' | 'Visualizador';
 }
 
 type SortKey = keyof Turma;
 
-const TurmaTable: React.FC<TurmaTableProps> = ({ data, onUpdate, onDelete }) => {
+const TurmaTable: React.FC<TurmaTableProps> = ({ data, onUpdate, onDelete, userRole }) => {
   const [sortKey, setSortKey] = useState<SortKey>('ano');
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
   const [currentPage, setCurrentPage] = useState(1);
@@ -113,9 +113,11 @@ const TurmaTable: React.FC<TurmaTableProps> = ({ data, onUpdate, onDelete }) => 
                   {header.label} {sortKey === header.key && (sortOrder === 'asc' ? '▲' : '▼')}
                 </th>
               ))}
-              <th scope="col" className="px-3 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                Ações
-              </th>
+              {userRole === 'Administrador' && (
+                <th scope="col" className="px-3 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                  Ações
+                </th>
+              )}
             </tr>
           </thead>
           <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -133,10 +135,12 @@ const TurmaTable: React.FC<TurmaTableProps> = ({ data, onUpdate, onDelete }) => 
                 <td className="px-3 py-4 whitespace-nowrap text-sm text-center text-green-600 dark:text-green-400">{t.qtdAprovados}</td>
                 <td className="px-3 py-4 whitespace-nowrap text-sm text-center text-red-600 dark:text-red-400">{t.qtdReprovadoNota}</td>
                 <td className="px-3 py-4 whitespace-nowrap text-sm text-center text-yellow-600 dark:text-yellow-400">{t.qtdReprovadoFreq}</td>
-                <td className="px-3 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  <button onClick={() => setEditingTurma(t)} className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-200 mr-3">Editar</button>
-                  <button onClick={() => onDelete(t.id)} className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-200">Excluir</button>
-                </td>
+                {userRole === 'Administrador' && (
+                  <td className="px-3 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <button onClick={() => setEditingTurma(t)} className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-200 mr-3">Editar</button>
+                    <button onClick={() => onDelete(t.id)} className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-200">Excluir</button>
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>

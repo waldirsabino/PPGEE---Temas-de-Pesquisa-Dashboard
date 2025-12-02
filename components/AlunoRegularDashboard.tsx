@@ -1,5 +1,3 @@
-
-
 import React, { useState, useMemo, useCallback } from 'react';
 import { AlunoRegular, Course } from '../types';
 import AlunoRegularTable from './AlunoRegularTable';
@@ -9,6 +7,7 @@ interface AlunoRegularDashboardProps {
   alunos: AlunoRegular[];
   onUpdate: (aluno: AlunoRegular) => void;
   onDelete: (id: string) => void;
+  userRole: 'Administrador' | 'Visualizador';
 }
 
 const getYear = (dateString?: string): number | undefined => {
@@ -56,7 +55,7 @@ const calculateDurationInMonths = (aluno: AlunoRegular): number | null => {
   return diffDays / 30.4375; // Average days in a month
 };
 
-const AlunoRegularDashboard: React.FC<AlunoRegularDashboardProps> = ({ alunos, onUpdate, onDelete }) => {
+const AlunoRegularDashboard: React.FC<AlunoRegularDashboardProps> = ({ alunos, onUpdate, onDelete, userRole }) => {
   const uniqueOrientadores = useMemo(() => {
     const orientadoresSet = new Set(alunos.map(a => a.orientador || 'N/A'));
     const orientadores = Array.from(orientadoresSet);
@@ -64,7 +63,7 @@ const AlunoRegularDashboard: React.FC<AlunoRegularDashboardProps> = ({ alunos, o
     return orientadores.sort((a, b) => {
         if (a === 'N/A') return -1;
         if (b === 'N/A') return 1;
-        return a.localeCompare(b);
+        return String(a).localeCompare(String(b));
     });
   }, [alunos]);
 
@@ -157,7 +156,7 @@ const AlunoRegularDashboard: React.FC<AlunoRegularDashboardProps> = ({ alunos, o
               id="searchName" 
               value={searchName} 
               onChange={(e) => setSearchName(e.target.value)} 
-              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" 
+              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-3 py-2" 
               placeholder="Digite o nome do aluno..." 
               aria-label="Buscar aluno por nome"
           />
@@ -165,11 +164,11 @@ const AlunoRegularDashboard: React.FC<AlunoRegularDashboardProps> = ({ alunos, o
         <div className="flex flex-wrap items-end gap-4">
           <div className="flex-1 min-w-[120px]">
             <label htmlFor="startYear" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Ano Início</label>
-            <input type="number" name="startYear" id="startYear" value={filters.startYear} onChange={handleFilterChange} className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" placeholder="Ex: 2020" />
+            <input type="number" name="startYear" id="startYear" value={filters.startYear} onChange={handleFilterChange} className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-3 py-2" placeholder="Ex: 2020" />
           </div>
           <div className="flex-1 min-w-[120px]">
             <label htmlFor="endYear" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Ano Fim</label>
-            <input type="number" name="endYear" id="endYear" value={filters.endYear} onChange={handleFilterChange} className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" placeholder="Ex: 2024" />
+            <input type="number" name="endYear" id="endYear" value={filters.endYear} onChange={handleFilterChange} className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-3 py-2" placeholder="Ex: 2024" />
           </div>
           <div className="flex-1 min-w-[120px]">
             <label htmlFor="course" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Curso</label>
@@ -225,7 +224,7 @@ const AlunoRegularDashboard: React.FC<AlunoRegularDashboardProps> = ({ alunos, o
                     id="durationValue" 
                     value={filters.durationValue} 
                     onChange={handleFilterChange} 
-                    className="block w-full rounded-none rounded-r-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm disabled:bg-gray-50 dark:disabled:bg-gray-800" 
+                    className="block w-full rounded-none rounded-r-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm disabled:bg-gray-50 dark:disabled:bg-gray-800 px-3 py-2" 
                     placeholder="Ex: 24"
                     disabled={filters.durationType === 'none'}
                 />
@@ -266,7 +265,7 @@ const AlunoRegularDashboard: React.FC<AlunoRegularDashboardProps> = ({ alunos, o
       
       {/* Table */}
       <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
-        <AlunoRegularTable data={filteredAlunos} onUpdate={onUpdate} onDelete={onDelete} filters={filters} />
+        <AlunoRegularTable data={filteredAlunos} onUpdate={onUpdate} onDelete={onDelete} filters={filters} userRole={userRole} />
       </div>
     </div>
   );

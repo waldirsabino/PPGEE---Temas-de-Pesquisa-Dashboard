@@ -4,12 +4,16 @@ import Header from './components/Header';
 import Dashboard from './components/Dashboard';
 import DataManagement from './components/DataManagement';
 import AdminPanel from './components/AdminPanel';
-import { Graduate, Docente, Projeto, Turma, AlunoRegular, Periodico, Conferencia, AlunoEspecial } from './types';
+import { Graduate, Docente, Projeto, Turma, AlunoRegular, Periodico, Conferencia, AlunoEspecial, User } from './types';
 import TurmasDashboard from './components/TurmasDashboard';
 import AlunoRegularDashboard from './components/AlunoRegularDashboard';
 import PublicacoesDashboard from './components/PublicacoesDashboard';
 import DocentesDashboard from './components/DocentesDashboard';
 import AlunoEspecialDashboard from './components/AlunoEspecialDashboard';
+import { MOCK_USERS } from './constants';
+
+// Declaração para o localforage carregado via CDN no index.html
+declare const localforage: any;
 
 type View = 'dashboard' | 'turmas' | 'alunoRegular' | 'alunoEspecial' | 'docentes' | 'publicacoes' | 'dataManagement' | 'admin';
 
@@ -34,145 +38,109 @@ const APP_PERIODICOS_STORAGE_KEY = 'ppgee-periodicos-data';
 const APP_CONFERENCIAS_STORAGE_KEY = 'ppgee-conferencias-data';
 
 const App: React.FC = () => {
+  const [currentUser, setCurrentUser] = useState<User>(MOCK_USERS[0]); // Default to Admin
+  const userRole = currentUser.role;
+
   const [activeView, setActiveView] = useState<View>('dashboard');
-  const [graduates, setGraduates] = useState<Graduate[]>(() => {
-    try {
-      const savedData = localStorage.getItem(APP_GRADUATES_STORAGE_KEY);
-      return savedData ? JSON.parse(savedData) : [];
-    } catch (error) {
-      console.error("Erro ao carregar dados de egressos do localStorage:", error);
-      return [];
-    }
-  });
-   const [docentes, setDocentes] = useState<Docente[]>(() => {
-    try {
-      const savedData = localStorage.getItem(APP_DOCENTES_STORAGE_KEY);
-      return savedData ? JSON.parse(savedData) : [];
-    } catch (error) {
-      console.error("Erro ao carregar dados de docentes do localStorage:", error);
-      return [];
-    }
-  });
-  const [projetos, setProjetos] = useState<Projeto[]>(() => {
-    try {
-      const savedData = localStorage.getItem(APP_PROJETOS_STORAGE_KEY);
-      return savedData ? JSON.parse(savedData) : [];
-    } catch (error) {
-      console.error("Erro ao carregar dados de projetos do localStorage:", error);
-      return [];
-    }
-  });
-  const [turmas, setTurmas] = useState<Turma[]>(() => {
-    try {
-      const savedData = localStorage.getItem(APP_TURMAS_STORAGE_KEY);
-      return savedData ? JSON.parse(savedData) : [];
-    } catch (error) {
-      console.error("Erro ao carregar dados de turmas do localStorage:", error);
-      return [];
-    }
-  });
-  const [alunosRegulares, setAlunosRegulares] = useState<AlunoRegular[]>(() => {
-    try {
-      const savedData = localStorage.getItem(APP_ALUNOS_REGULARES_STORAGE_KEY);
-      return savedData ? JSON.parse(savedData) : [];
-    } catch (error) {
-      console.error("Erro ao carregar dados de alunos regulares do localStorage:", error);
-      return [];
-    }
-  });
-  const [alunosEspeciais, setAlunosEspeciais] = useState<AlunoEspecial[]>(() => {
-    try {
-      const savedData = localStorage.getItem(APP_ALUNOS_ESPECIAIS_STORAGE_KEY);
-      return savedData ? JSON.parse(savedData) : [];
-    } catch (error) {
-      console.error("Erro ao carregar dados de alunos especiais do localStorage:", error);
-      return [];
-    }
-  });
-  const [periodicos, setPeriodicos] = useState<Periodico[]>(() => {
-    try {
-      const savedData = localStorage.getItem(APP_PERIODICOS_STORAGE_KEY);
-      return savedData ? JSON.parse(savedData) : [];
-    } catch (error) {
-      console.error("Erro ao carregar dados de periódicos do localStorage:", error);
-      return [];
-    }
-  });
-  const [conferencias, setConferencias] = useState<Conferencia[]>(() => {
-    try {
-      const savedData = localStorage.getItem(APP_CONFERENCIAS_STORAGE_KEY);
-      return savedData ? JSON.parse(savedData) : [];
-    } catch (error) {
-      console.error("Erro ao carregar dados de conferências do localStorage:", error);
-      return [];
-    }
-  });
+  
+  // States
+  const [graduates, setGraduates] = useState<Graduate[]>([]);
+  const [docentes, setDocentes] = useState<Docente[]>([]);
+  const [projetos, setProjetos] = useState<Projeto[]>([]);
+  const [turmas, setTurmas] = useState<Turma[]>([]);
+  const [alunosRegulares, setAlunosRegulares] = useState<AlunoRegular[]>([]);
+  const [alunosEspeciais, setAlunosEspeciais] = useState<AlunoEspecial[]>([]);
+  const [periodicos, setPeriodicos] = useState<Periodico[]>([]);
+  const [conferencias, setConferencias] = useState<Conferencia[]>([]);
+  
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  // Redirect Viewer away from restricted pages
+  useEffect(() => {
+    if (userRole === 'Visualizador') {
+      if (['docentes', 'dataManagement', 'admin'].includes(activeView)) {
+        setActiveView('dashboard');
+      }
+    }
+  }, [userRole, activeView]);
+
+  // Load Data from IndexedDB on Startup
+  useEffect(() => {
+    const loadData = async () => {
+        try {
+            const [
+                grads, 
+                docs, 
+                projs, 
+                turmasData, 
+                alunosReg, 
+                alunosEsp, 
+                periods, 
+                confs
+            ] = await Promise.all([
+                localforage.getItem(APP_GRADUATES_STORAGE_KEY),
+                localforage.getItem(APP_DOCENTES_STORAGE_KEY),
+                localforage.getItem(APP_PROJETOS_STORAGE_KEY),
+                localforage.getItem(APP_TURMAS_STORAGE_KEY),
+                localforage.getItem(APP_ALUNOS_REGULARES_STORAGE_KEY),
+                localforage.getItem(APP_ALUNOS_ESPECIAIS_STORAGE_KEY),
+                localforage.getItem(APP_PERIODICOS_STORAGE_KEY),
+                localforage.getItem(APP_CONFERENCIAS_STORAGE_KEY)
+            ]);
+
+            if (grads) setGraduates(grads);
+            if (docs) setDocentes(docs);
+            if (projs) setProjetos(projs);
+            if (turmasData) setTurmas(turmasData);
+            if (alunosReg) setAlunosRegulares(alunosReg);
+            if (alunosEsp) setAlunosEspeciais(alunosEsp);
+            if (periods) setPeriodicos(periods);
+            if (confs) setConferencias(confs);
+        } catch (err) {
+            console.error("Erro ao carregar dados do banco de dados:", err);
+        } finally {
+            setIsLoaded(true);
+        }
+    };
+    loadData();
+  }, []);
+
+  // Save Data Observers - Only save if initial load is complete
+  useEffect(() => {
+    if (isLoaded) localforage.setItem(APP_GRADUATES_STORAGE_KEY, graduates);
+  }, [graduates, isLoaded]);
 
   useEffect(() => {
-    try {
-      localStorage.setItem(APP_GRADUATES_STORAGE_KEY, JSON.stringify(graduates));
-    } catch (error) {
-      console.error("Erro ao salvar dados de egressos no localStorage:", error);
-    }
-  }, [graduates]);
+    if (isLoaded) localforage.setItem(APP_DOCENTES_STORAGE_KEY, docentes);
+  }, [docentes, isLoaded]);
 
   useEffect(() => {
-    try {
-      localStorage.setItem(APP_DOCENTES_STORAGE_KEY, JSON.stringify(docentes));
-    } catch (error) {
-      console.error("Erro ao salvar dados de docentes no localStorage:", error);
-    }
-  }, [docentes]);
+    if (isLoaded) localforage.setItem(APP_PROJETOS_STORAGE_KEY, projetos);
+  }, [projetos, isLoaded]);
 
   useEffect(() => {
-    try {
-      localStorage.setItem(APP_PROJETOS_STORAGE_KEY, JSON.stringify(projetos));
-    } catch (error) {
-      console.error("Erro ao salvar dados de projetos do localStorage:", error);
-    }
-  }, [projetos]);
+    if (isLoaded) localforage.setItem(APP_TURMAS_STORAGE_KEY, turmas);
+  }, [turmas, isLoaded]);
 
   useEffect(() => {
-    try {
-      localStorage.setItem(APP_TURMAS_STORAGE_KEY, JSON.stringify(turmas));
-    } catch (error) {
-      console.error("Erro ao salvar dados de turmas do localStorage:", error);
-    }
-  }, [turmas]);
+    if (isLoaded) localforage.setItem(APP_ALUNOS_REGULARES_STORAGE_KEY, alunosRegulares);
+  }, [alunosRegulares, isLoaded]);
 
   useEffect(() => {
-    try {
-      localStorage.setItem(APP_ALUNOS_REGULARES_STORAGE_KEY, JSON.stringify(alunosRegulares));
-    } catch (error) {
-      console.error("Erro ao salvar dados de alunos regulares do localStorage:", error);
-    }
-  }, [alunosRegulares]);
+    if (isLoaded) localforage.setItem(APP_ALUNOS_ESPECIAIS_STORAGE_KEY, alunosEspeciais);
+  }, [alunosEspeciais, isLoaded]);
 
   useEffect(() => {
-    try {
-      localStorage.setItem(APP_ALUNOS_ESPECIAIS_STORAGE_KEY, JSON.stringify(alunosEspeciais));
-    } catch (error) {
-      console.error("Erro ao salvar dados de alunos especiais no localStorage:", error);
-    }
-  }, [alunosEspeciais]);
+    if (isLoaded) localforage.setItem(APP_PERIODICOS_STORAGE_KEY, periodicos);
+  }, [periodicos, isLoaded]);
 
   useEffect(() => {
-    try {
-      localStorage.setItem(APP_PERIODICOS_STORAGE_KEY, JSON.stringify(periodicos));
-    } catch (error) {
-      console.error("Erro ao salvar dados de periódicos do localStorage:", error);
-    }
-  }, [periodicos]);
+    if (isLoaded) localforage.setItem(APP_CONFERENCIAS_STORAGE_KEY, conferencias);
+  }, [conferencias, isLoaded]);
 
-  useEffect(() => {
-    try {
-      localStorage.setItem(APP_CONFERENCIAS_STORAGE_KEY, JSON.stringify(conferencias));
-    } catch (error) {
-      console.error("Erro ao salvar dados de conferências do localStorage:", error);
-    }
-  }, [conferencias]);
 
+  // --- Handlers ---
 
   const handleAddGraduate = useCallback((graduate: Graduate) => {
     setGraduates(prev => [...prev, graduate]);
@@ -187,10 +155,7 @@ const App: React.FC = () => {
   }, []);
   
   const handleImportGraduates = useCallback((newGraduates: Graduate[]) => {
-    setGraduates(prev => {
-        const updatedGraduates = [...prev, ...newGraduates];
-        return updatedGraduates;
-    });
+    setGraduates(prev => [...prev, ...newGraduates]);
     setActiveView('dashboard');
   }, []);
 
@@ -310,6 +275,7 @@ const App: React.FC = () => {
             throw new Error("Backup data is not a valid object.");
         }
         
+        // Batch updates are fine as localforage will handle the async sets in the effects
         setGraduates(Array.isArray(data.graduates) ? data.graduates : []);
         setDocentes(Array.isArray(data.docentes) ? data.docentes : []);
         setProjetos(Array.isArray(data.projetos) ? data.projetos : []);
@@ -326,17 +292,12 @@ const App: React.FC = () => {
     }
   }, []);
 
-  const handleClearAllData = useCallback(() => {
+  const handleClearAllData = useCallback(async () => {
     try {
-      localStorage.removeItem(APP_GRADUATES_STORAGE_KEY);
-      localStorage.removeItem(APP_DOCENTES_STORAGE_KEY);
-      localStorage.removeItem(APP_PROJETOS_STORAGE_KEY);
-      localStorage.removeItem(APP_TURMAS_STORAGE_KEY);
-      localStorage.removeItem(APP_ALUNOS_REGULARES_STORAGE_KEY);
-      localStorage.removeItem(APP_ALUNOS_ESPECIAIS_STORAGE_KEY);
-      localStorage.removeItem(APP_PERIODICOS_STORAGE_KEY);
-      localStorage.removeItem(APP_CONFERENCIAS_STORAGE_KEY);
+      // Clear persistent storage
+      await localforage.clear();
       
+      // Clear React state
       setGraduates([]);
       setDocentes([]);
       setProjetos([]);
@@ -365,26 +326,31 @@ const App: React.FC = () => {
                   projetos={projetos}
                   onUpdateProjeto={handleUpdateProjeto}
                   onDeleteProjeto={handleDeleteProjeto}
+                  userRole={userRole}
                 />;
       case 'turmas':
         return <TurmasDashboard 
                   turmas={turmas}
                   onUpdate={handleUpdateTurma}
                   onDelete={handleDeleteTurma}
+                  userRole={userRole}
                />;
       case 'alunoRegular':
         return <AlunoRegularDashboard
                   alunos={alunosRegulares}
                   onUpdate={handleUpdateAlunoRegular}
                   onDelete={handleDeleteAlunoRegular}
+                  userRole={userRole}
                 />;
       case 'alunoEspecial':
         return <AlunoEspecialDashboard />;
       case 'docentes':
+        if (userRole === 'Visualizador') return null;
         return <DocentesDashboard
                   docentes={docentes}
                   onUpdate={handleUpdateDocente}
                   onDelete={handleDeleteDocente}
+                  userRole={userRole}
                 />;
       case 'publicacoes':
         return <PublicacoesDashboard
@@ -394,8 +360,10 @@ const App: React.FC = () => {
                   onDeletePeriodico={handleDeletePeriodico}
                   onUpdateConferencia={handleUpdateConferencia}
                   onDeleteConferencia={handleDeleteConferencia}
+                  userRole={userRole}
                 />;
       case 'dataManagement':
+        if (userRole === 'Visualizador') return null;
         return <DataManagement 
                   onAddGraduate={handleAddGraduate} 
                   onImportGraduates={handleImportGraduates}
@@ -425,6 +393,7 @@ const App: React.FC = () => {
                   onClearAllData={handleClearAllData}
                 />;
       case 'admin':
+        if (userRole === 'Visualizador') return null;
         return <AdminPanel />;
       default:
         return <Dashboard 
@@ -436,9 +405,20 @@ const App: React.FC = () => {
                   projetos={projetos}
                   onUpdateProjeto={handleUpdateProjeto}
                   onDeleteProjeto={handleDeleteProjeto}
+                  userRole={userRole}
                 />;
     }
   };
+
+  if (!isLoaded) {
+      return (
+          <div className="flex h-screen items-center justify-center bg-gray-100 dark:bg-gray-900">
+              <div className="text-xl font-semibold text-gray-700 dark:text-gray-200 animate-pulse">
+                  Carregando dados...
+              </div>
+          </div>
+      );
+  }
 
   return (
     <div className="flex h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
@@ -447,6 +427,12 @@ const App: React.FC = () => {
         setActiveView={setActiveView} 
         isCollapsed={isSidebarCollapsed}
         onToggle={handleToggleSidebar}
+        userRole={userRole}
+        onUserChange={(userId) => {
+            const user = MOCK_USERS.find(u => u.id === userId);
+            if (user) setCurrentUser(user);
+        }}
+        currentUser={currentUser}
       />
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header title={viewTitles[activeView]} />

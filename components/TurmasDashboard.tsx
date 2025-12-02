@@ -7,11 +7,12 @@ interface TurmasDashboardProps {
   turmas: Turma[];
   onUpdate: (turma: Turma) => void;
   onDelete: (id: string) => void;
+  userRole: 'Administrador' | 'Visualizador';
 }
 
 const PIE_COLORS = ['#00C49F', '#FF8042', '#FFBB28']; // Aprovados, Reprovado Nota, Reprovado Freq
 
-const TurmasDashboard: React.FC<TurmasDashboardProps> = ({ turmas, onUpdate, onDelete }) => {
+const TurmasDashboard: React.FC<TurmasDashboardProps> = ({ turmas, onUpdate, onDelete, userRole }) => {
   const uniqueDocentes = useMemo(() => {
     const docentes = new Set(turmas.map(t => t.docente));
     return Array.from(docentes).sort();
@@ -235,7 +236,7 @@ const TurmasDashboard: React.FC<TurmasDashboardProps> = ({ turmas, onUpdate, onD
         </div>
 
         <div className="lg:col-span-3 bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
-            <TurmaTable data={filteredTurmas} onUpdate={onUpdate} onDelete={onDelete} />
+            <TurmaTable data={filteredTurmas} onUpdate={onUpdate} onDelete={onDelete} userRole={userRole} />
         </div>
       </div>
     </div>

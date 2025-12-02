@@ -3,7 +3,6 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 import { Graduate, Course, Status, Projeto, Docente, Turma } from '../types';
 import DataTable from './DataTable';
 import ProjetoTable from './ProjetoTable';
-import DocenteTable from './DocenteTable';
 import InformationCircleIcon from './icons/InformationCircleIcon';
 
 interface DashboardProps {
@@ -15,6 +14,7 @@ interface DashboardProps {
   projetos: Projeto[];
   onUpdateProjeto: (projeto: Projeto) => void;
   onDeleteProjeto: (id: string) => void;
+  userRole: 'Administrador' | 'Visualizador';
 }
 
 const getYear = (dateString?: string): number | undefined => {
@@ -58,7 +58,7 @@ const calculateMonthsDifference = (startStr: string, endStr: string): number => 
 }
 
 
-const Dashboard: React.FC<DashboardProps> = ({ graduates, docentes, turmas, onUpdate, onDelete, projetos, onUpdateProjeto, onDeleteProjeto }) => {
+const Dashboard: React.FC<DashboardProps> = ({ graduates, docentes, turmas, onUpdate, onDelete, projetos, onUpdateProjeto, onDeleteProjeto, userRole }) => {
   const uniqueOrientadores = useMemo(() => {
     const orientadoresSet = new Set(graduates.map(g => g.orientador || 'N/A'));
     const orientadores = Array.from(orientadoresSet);
@@ -66,7 +66,7 @@ const Dashboard: React.FC<DashboardProps> = ({ graduates, docentes, turmas, onUp
     return orientadores.sort((a, b) => {
         if (a === 'N/A') return -1;
         if (b === 'N/A') return 1;
-        return a.localeCompare(b);
+        return String(a).localeCompare(String(b));
     });
   }, [graduates]);
 
@@ -865,10 +865,10 @@ Meta: 0,85.
               </div>
               <div className="mt-4">
                 {activeTable === 'egressos' && (
-                   <DataTable data={filteredGraduates} onUpdate={onUpdate} onDelete={onDelete} />
+                   <DataTable data={filteredGraduates} onUpdate={onUpdate} onDelete={onDelete} userRole={userRole} />
                 )}
                 {activeTable === 'projetos' && (
-                   <ProjetoTable data={filteredProjetos} onUpdate={onUpdateProjeto} onDelete={onDeleteProjeto} />
+                   <ProjetoTable data={filteredProjetos} onUpdate={onUpdateProjeto} onDelete={onDeleteProjeto} userRole={userRole} />
                 )}
               </div>
             </>

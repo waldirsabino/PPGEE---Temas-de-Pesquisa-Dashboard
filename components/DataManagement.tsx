@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useRef, useMemo } from 'react';
 import { Graduate, Course, Status, Docente, Projeto, Turma, AlunoRegular, Periodico, Conferencia, AlunoEspecial } from '../types';
 import DataForm from './DataForm';
@@ -932,6 +933,11 @@ const DataManagement: React.FC<DataManagementProps> = ({
         if(restoreFileInputRef.current) restoreFileInputRef.current.value = "";
       }
     };
+    reader.onerror = (e) => {
+        console.error("Erro ao ler arquivo:", e);
+        alert("Erro ao ler o arquivo de backup.");
+        if(restoreFileInputRef.current) restoreFileInputRef.current.value = "";
+    };
     reader.readAsText(file);
   }, [onRestoreBackup]);
 
@@ -1139,7 +1145,14 @@ const DataManagement: React.FC<DataManagementProps> = ({
               <span>Fazer Backup</span>
             </button>
             <button 
-              onClick={() => restoreFileInputRef.current?.click()} 
+              onClick={() => {
+                // Reseta o valor do input antes de clicar para garantir que o evento onChange dispare
+                // mesmo se o usuário selecionar o mesmo arquivo novamente.
+                if (restoreFileInputRef.current) {
+                  restoreFileInputRef.current.value = '';
+                  restoreFileInputRef.current.click();
+                }
+              }} 
               className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-amber-500 text-white font-semibold rounded-lg shadow-md hover:bg-amber-600 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:ring-opacity-75 transition-colors"
             >
               <ArrowUpTrayIcon className="h-5 w-5" />
